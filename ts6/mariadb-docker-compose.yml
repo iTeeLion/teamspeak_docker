@@ -16,7 +16,7 @@ services:
       - TSSERVER_FILE_TRANSFER_IP=${TSSERVER_FILE_TRANSFER_IP:-0.0.0.0}
       - TSSERVER_FILE_TRANSFER_PORT=30033
       - TSSERVER_LOG_PATH=${TSSERVER_LOG_PATH:-logs}
-      - TSSERVER_LOG_TIMEZONE=${TSSERVER_LOG_TIMEZONE:-utc}
+      - TSSERVER_LOG_TIMEZONE=${TSSERVER_LOG_TIMEZONE:-local}
       - TSSERVER_QUERY_HTTP_ENABLED=${TSSERVER_QUERY_HTTP_ENABLED:-false}
       - TSSERVER_QUERY_SSH_ENABLED=${TSSERVER_QUERY_SSH_ENABLED:-false}
       #- TSSERVER_QUERY_ADMIN_PASSWORD=${TSSERVER_QUERY_ADMIN_PASSWORD}
@@ -39,7 +39,7 @@ services:
       #- TSSERVER_S3FT_ACCESS_KEY=${TSSERVER_S3FT_ACCESS_KEY}
       #- TSSERVER_S3FT_SECRET_KEY=${TSSERVER_S3FT_SECRET_KEY}
     volumes:
-      - teamspeak-data:/var/tsserver
+      - teamspeak-data:/var/ts6server
     depends_on:
       mariadb:
         condition: service_healthy
