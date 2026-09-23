@@ -1,0 +1,69 @@
+services:
+  teamspeak:
+    image: teamspeaksystems/teamspeak6-server:latest
+    container_name: teamspeak-server
+    restart: unless-stopped
+    ports:
+      - "${PORT_VOICE:-9987}:9987/udp"
+      - "${PORT_FILES:-30033}:30033/tcp"
+      - "${PORT_QUERY_WEB:-10080}:10080/tcp"
+      - "${PORT_QUERY_SSH:-10022}:10022/tcp"
+      # - "${PORT_METRICS:-9187}:9187/tcp"
+    environment:
+      - TSSERVER_LICENSE_ACCEPTED=accept
+      - TSSERVER_VOICE_IP=${TSSERVER_VOICE_IP:-0.0.0.0}
+      - TSSERVER_DEFAULT_PORT=9987
+      - TSSERVER_FILE_TRANSFER_IP=${TSSERVER_FILE_TRANSFER_IP:-0.0.0.0}
+      - TSSERVER_FILE_TRANSFER_PORT=30033
+      - TSSERVER_LOG_PATH=${TSSERVER_LOG_PATH:-logs}
+      - TSSERVER_LOG_TIMEZONE=${TSSERVER_LOG_TIMEZONE:-utc}
+      - TSSERVER_QUERY_HTTP_ENABLED=${TSSERVER_QUERY_HTTP_ENABLED:-false}
+      - TSSERVER_QUERY_SSH_ENABLED=${TSSERVER_QUERY_SSH_ENABLED:-false}
+      #- TSSERVER_QUERY_ADMIN_PASSWORD=${TSSERVER_QUERY_ADMIN_PASSWORD}
+      #- TSSERVER_QUERY_ADMIN_API_KEY=${TSSERVER_QUERY_ADMIN_API_KEY}
+      #- TSSERVER_QUERY_HTTP_ALLOW_GUEST=${TSSERVER_QUERY_HTTP_ALLOW_GUEST:-0}
+      #- TSSERVER_QUERY_SSH_ALLOW_GUEST=${TSSERVER_QUERY_SSH_ALLOW_GUEST:-0}
+      - TSSERVER_METRICS_ENABLED=${TSSERVER_METRICS_ENABLED:-false}
+      - TSSERVER_METRICS_IP=${TSSERVER_METRICS_IP:-0.0.0.0}
+      - TSSERVER_DATABASE_PLUGIN=mariadb
+      - TSSERVER_DATABASE_HOST=mariadb
+      - TSSERVER_DATABASE_PORT=3306
+      - TSSERVER_DATABASE_NAME=${TSSERVER_DATABASE_NAME:-teamspeak}
+      - TSSERVER_DATABASE_USERNAME=${TSSERVER_DATABASE_USERNAME:-teamspeak}
+      - TSSERVER_DATABASE_PASSWORD=${TSSERVER_DATABASE_PASSWORD:?TSSERVER_DATABASE_PASSWORD is required}
+      - TSSERVER_DATABASE_SQL_CREATE_PATH=create_mariadb
+      - TSSERVER_S3FT_ENABLED=${TSSERVER_S3FT_ENABLED:-false}
+      #- TSSERVER_S3FT_DOMAIN=${TSSERVER_S3FT_DOMAIN}
+      #- TSSERVER_S3FT_BUCKET=${TSSERVER_S3FT_BUCKET}
+      #- TSSERVER_S3FT_REGION=${TSSERVER_S3FT_REGION}
+      #- TSSERVER_S3FT_ACCESS_KEY=${TSSERVER_S3FT_ACCESS_KEY}
+      #- TSSERVER_S3FT_SECRET_KEY=${TSSERVER_S3FT_SECRET_KEY}
+    volumes:
+      - teamspeak-data:/var/tsserver
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
+      - MYSQL_PASSWORD=${TSSERVER_DATABASE_PASSWORD}
+      - MYSQL_DATABASE=${TSSERVER_DATABASE_NAME:-teamspeak}
+      - MYSQL_USER=${TSSERVER_DATABASE_USERNAME:-teamspeak}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  teamspeak-data:
+    name: teamspeak-data
+  mariadb-data:
+    name: mariadb-data
